@@ -1,0 +1,6 @@
+cert/
+postgres/
+templates/
+pgsql-data/
+run.log
+

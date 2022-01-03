@@ -1,0 +1,52 @@
+version: '2'
+services:
+  proxy:
+    image: nginx:1.21.3-alpine
+    volumes:
+      - ./templates:/etc/nginx/templates
+      - ./cert:/etc/nginx/certs
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - ./conf/conf.env
+  db:
+#    image: postgres:14.0-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres/init:/docker-entrypoint-initdb.d
+      - ./pgsql-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+      TZ: Asia/Tokyo
+    hostname: postgres
+    restart: always
+#    user: "coder:coder"
+    user: root
+
+  coder:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "3000:3000"
+      - "5000:5000"
+    user: "1001:1002"
+    environment:
+      TZ: Asia/Tokyo
+      PASSWORD: "${CODER_PASSWORD}"
+    volumes:
+      - /home/coder/projects:/home/coder/project
+      - /home/coder/.local/share/code-server:/home/coder/.local/share/code-server
+      - /home/coder/.ssh:/home/coder/.ssh
+      - /home/coder/.gitconfig:/home/coder/.gitconfig
+      - /home/coder/.pylintrc:/home/coder/.pylintrc
+      - /home/coder/.local/share/NuGet:/home/coder/.local/share/NuGet
+
